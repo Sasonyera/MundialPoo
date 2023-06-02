@@ -494,8 +494,8 @@ public class GUIManual extends JFrame {
     int cuatro2 = seleccionDAO.getNumeroPartidosConEmpatados();
     SeleccionDAO.EquipoConGoles cinco1 = seleccionDAO.getEquipoConMasGoles();
     SeleccionDAO.EquipoConGoles cinco2 = seleccionDAO.getEquipoConMenosGoles();
-    String seis1 = seleccionDAO.getEquipoConMasPuntos();
-    String seis2 = seleccionDAO.getEquipoConMenosPuntos();
+    SeleccionDAO.EquipoConGoles seis1 = seleccionDAO.getEquipoConMasPuntos();
+    SeleccionDAO.EquipoConGoles seis2 = seleccionDAO.getEquipoConMenosPuntos();
     String siete1 = seleccionDAO.getContinenteConMasGoles();
     String siete2 = seleccionDAO.getContinenteConMenosGoles();
     
@@ -537,11 +537,15 @@ JPanel PuntoCinco = new JPanel();
         PuntoCinco.setLayout(new BoxLayout(PuntoCinco, BoxLayout.Y_AXIS));
         PuntoCinco.add(crearGraficaBarrasApiladas(cinco1, cinco2));
        
-        paneles.add(PuntoCinco);
+//seis
+JPanel PuntoSeis = new JPanel();
+        PuntoSeis.setLayout(new BoxLayout(PuntoSeis, BoxLayout.Y_AXIS));
+        PuntoSeis.add(crearGraficaBarrasApiladas6(seis1, seis2));
+ 
         paneles.add(PuntoUno);
         paneles.add(PuntoCuatro);
         paneles.add(PuntoCinco);
-    
+        paneles.add(PuntoSeis);
     
         jPanelMain.setLayout(new BorderLayout());
         
@@ -620,6 +624,49 @@ System.out.println("Equipo con menos goles: " + equipoConMenosGoles.getNombreEqu
             "Selecciones con más y menos goles",
             "Selección",
             "Cantidad de goles",
+            dataset,
+            PlotOrientation.HORIZONTAL,
+            true,
+            true,
+            false
+    );
+
+    CategoryPlot plot = graficoBarras.getCategoryPlot();
+    BarRenderer renderer = (BarRenderer) plot.getRenderer();
+    renderer.setSeriesPaint(0, new Color(9, 72, 132));
+    renderer.setSeriesPaint(1, new Color(18, 119, 217));
+    
+    CategoryAxis domainAxis = plot.getDomainAxis();
+    domainAxis.setTickLabelsVisible(true);
+    
+    // Ajustar el espacio entre las barras
+    double margin = 0.2; // Espacio entre las barras (20% del ancho total)
+    domainAxis.setCategoryMargin(margin);
+    
+    // Ajustar el espacio en los extremos del eje
+    double start = margin / 2.0; // Espacio al principio del eje
+    double end = 1.0 - margin / 2.0; // Espacio al final del eje
+    domainAxis.setLowerMargin(start);
+    domainAxis.setUpperMargin(1.0 - end);
+    
+    ChartPanel panel = new ChartPanel(graficoBarras);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+private ChartPanel crearGraficaBarrasApiladas6(EquipoConGoles equipoConMasPuntos, EquipoConGoles equipoConMenosPuntos) {
+     System.out.println("Equipo con más puntos: " + equipoConMasPuntos.getNombreEquipo()+ " - " + equipoConMasPuntos.getCantidadGoles()*3);
+System.out.println("Equipo con menos puntos: " + equipoConMenosPuntos.getNombreEquipo()+ " - " + equipoConMenosPuntos.getCantidadGoles()*3);
+
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    dataset.addValue(equipoConMasPuntos.getCantidadGoles()*3, "Puntos", equipoConMasPuntos.getNombreEquipo());
+    dataset.addValue(equipoConMenosPuntos.getCantidadGoles()*3, "Puntos", equipoConMenosPuntos.getNombreEquipo());
+
+    JFreeChart graficoBarras = ChartFactory.createBarChart(
+            "Selecciones con más y menos puntos",
+            "Selección",
+            "Cantidad de puntos",
             dataset,
             PlotOrientation.HORIZONTAL,
             true,

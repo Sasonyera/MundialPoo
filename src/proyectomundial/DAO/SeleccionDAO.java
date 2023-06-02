@@ -407,16 +407,16 @@ public EquipoConGoles getEquipoConMenosGoles() {
     return equipoConMenosGoles;
 }
 
-public String getEquipoConMasPuntos() {
+public EquipoConGoles getEquipoConMasPuntos() {
     String sql = "SELECT local, SUM(CASE WHEN goles_local > goles_visitante THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_local, visitante, SUM(CASE WHEN goles_visitante > goles_local THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_visitante FROM w_garcia2.resultado GROUP BY local, visitante";
-    String equipoConMasPuntos = "";
+    EquipoConGoles equipoConMasPuntos = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
         if (result != null) {
             int maxPuntos = Integer.MIN_VALUE;
-            
+
             while (result.next()) {
                 int puntosLocal = result.getInt("puntos_local");
                 int puntosVisitante = result.getInt("puntos_visitante");
@@ -427,7 +427,8 @@ public String getEquipoConMasPuntos() {
 
                 if (puntosEquipo > maxPuntos) {
                     maxPuntos = puntosEquipo;
-                    equipoConMasPuntos = (puntosLocal > puntosVisitante) ? equipoLocal : equipoVisitante;
+                    String nombreEquipo = (puntosLocal > puntosVisitante) ? equipoLocal : equipoVisitante;
+                    equipoConMasPuntos = new EquipoConGoles(nombreEquipo, puntosEquipo);
                 }
             }
         }
@@ -438,16 +439,17 @@ public String getEquipoConMasPuntos() {
 
     return equipoConMasPuntos;
 }
-public String getEquipoConMenosPuntos() {
+
+public EquipoConGoles getEquipoConMenosPuntos() {
     String sql = "SELECT local, SUM(CASE WHEN goles_local > goles_visitante THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_local, visitante, SUM(CASE WHEN goles_visitante > goles_local THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_visitante FROM w_garcia2.resultado GROUP BY local, visitante";
-    String equipoConMenosPuntos = "";
+    EquipoConGoles equipoConMenosPuntos = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
         if (result != null) {
             int minPuntos = Integer.MAX_VALUE;
-            
+
             while (result.next()) {
                 int puntosLocal = result.getInt("puntos_local");
                 int puntosVisitante = result.getInt("puntos_visitante");
@@ -458,7 +460,8 @@ public String getEquipoConMenosPuntos() {
 
                 if (puntosEquipo < minPuntos) {
                     minPuntos = puntosEquipo;
-                    equipoConMenosPuntos = (puntosLocal < puntosVisitante) ? equipoLocal : equipoVisitante;
+                    String nombreEquipo = (puntosLocal < puntosVisitante) ? equipoLocal : equipoVisitante;
+                    equipoConMenosPuntos = new EquipoConGoles(nombreEquipo, puntosEquipo);
                 }
             }
         }
@@ -469,6 +472,7 @@ public String getEquipoConMenosPuntos() {
 
     return equipoConMenosPuntos;
 }
+
 
 public String getContinenteConMasGoles() {
     String sql = "SELECT continente_local, continente_visitante, SUM(goles_local),  SUM(goles_visitante), SUM(goles_local) + SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY continente_local, continente_visitante ORDER BY total_goles DESC LIMIT 1";
