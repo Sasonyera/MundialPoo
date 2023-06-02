@@ -474,33 +474,24 @@ public EquipoConGoles getEquipoConMenosPuntos() {
 }
 
 
-public String getContinenteConMasGoles() {
-    String sql = "SELECT continente_local, continente_visitante, SUM(goles_local),  SUM(goles_visitante), SUM(goles_local) + SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY continente_local, continente_visitante ORDER BY total_goles DESC LIMIT 1";
-    String continenteConMasGoles = "";
+public EquipoConGoles getContinenteConMasGoles() {
+    String sql = "SELECT continente, SUM(total_goles) as goles FROM (SELECT continente_local as continente, SUM(goles_local) as total_goles FROM w_garcia2.resultado GROUP BY continente_local " +
+            "UNION ALL " +
+            "SELECT continente_visitante as continente, SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY continente_visitante) as goles_totales " +
+            "GROUP BY continente " +
+            "ORDER BY goles DESC " +
+            "LIMIT 1";
+
+    EquipoConGoles continenteConMasGoles = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
         if (result != null && result.next()) {
-            String continenteLocal = result.getString("continente_local");
-            String continenteVisitante = result.getString("continente_visitante");
-            if ((continenteLocal != null && !continenteLocal.isEmpty()) && (continenteVisitante != null && !continenteVisitante.isEmpty())) {
-                // Si ambos continentes son diferentes, seleccionamos el continente con más goles
-                if (!continenteLocal.equals(continenteVisitante)) {
-                    // Seleccionamos el continente con más goles de los dos
-                    int golesLocal = result.getInt(3);
-                    int golesVisitante = result.getInt(4);
-                    continenteConMasGoles = (golesLocal > golesVisitante) ? continenteLocal : continenteVisitante;
-                } else {
-                    // Si ambos continentes son iguales, simplemente seleccionamos uno de ellos
-                    continenteConMasGoles = continenteLocal;
-                }
-            } else if (continenteLocal != null && !continenteLocal.isEmpty()) {
-                // Si solo uno de los continentes es válido, seleccionamos ese
-                continenteConMasGoles = continenteLocal;
-            } else if (continenteVisitante != null && !continenteVisitante.isEmpty()) {
-                continenteConMasGoles = continenteVisitante;
-            }
+            String continente = result.getString("continente");
+            int goles = result.getInt("goles");
+
+            continenteConMasGoles = new EquipoConGoles(continente, goles);
         }
     } catch (Exception e) {
         System.out.println(e.toString());
@@ -509,33 +500,25 @@ public String getContinenteConMasGoles() {
 
     return continenteConMasGoles;
 }
-public String getContinenteConMenosGoles() {
-    String sql = "SELECT continente_local, continente_visitante, SUM(goles_local),  SUM(goles_visitante), SUM(goles_local) + SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY continente_local, continente_visitante ORDER BY total_goles ASC LIMIT 1";
-    String continenteConMenosGoles = "";
+
+    public EquipoConGoles getContinenteConMenosGoles() {
+    String sql = "SELECT continente, SUM(total_goles) as goles FROM (SELECT continente_local as continente, SUM(goles_local) as total_goles FROM w_garcia2.resultado GROUP BY continente_local " +
+            "UNION ALL " +
+            "SELECT continente_visitante as continente, SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY continente_visitante) as goles_totales " +
+            "GROUP BY continente " +
+            "ORDER BY goles ASC " +
+            "LIMIT 1";
+
+    EquipoConGoles continenteConMenosGoles = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
         if (result != null && result.next()) {
-            String continenteLocal = result.getString("continente_local");
-            String continenteVisitante = result.getString("continente_visitante");
-            if ((continenteLocal != null && !continenteLocal.isEmpty()) && (continenteVisitante != null && !continenteVisitante.isEmpty())) {
-                // Si ambos continentes son diferentes, seleccionamos el continente con menos goles
-                if (!continenteLocal.equals(continenteVisitante)) {
-                    // Seleccionamos el continente con menos goles de los dos
-                    int golesLocal = result.getInt(3);
-                    int golesVisitante = result.getInt(4);
-                    continenteConMenosGoles = (golesLocal < golesVisitante) ? continenteLocal : continenteVisitante;
-                } else {
-                    // Si ambos continentes son iguales, simplemente seleccionamos uno de ellos
-                    continenteConMenosGoles = continenteLocal;
-                }
-            } else if (continenteLocal != null && !continenteLocal.isEmpty()) {
-                // Si solo uno de los continentes es válido, seleccionamos ese
-                continenteConMenosGoles = continenteLocal;
-            } else if (continenteVisitante != null && !continenteVisitante.isEmpty()) {
-                continenteConMenosGoles = continenteVisitante;
-            }
+            String continente = result.getString("continente");
+            int goles = result.getInt("goles");
+
+            continenteConMenosGoles = new EquipoConGoles(continente, goles);
         }
     } catch (Exception e) {
         System.out.println(e.toString());
@@ -544,6 +527,7 @@ public String getContinenteConMenosGoles() {
 
     return continenteConMenosGoles;
 }
+
 public List<String> getEquiposClasificadosPorGrupo() {
      String sql = "SELECT grupo, local, visitante, SUM(CASE WHEN goles_local > goles_visitante THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos FROM w_garcia2.resultado GROUP BY grupo, local, visitante";
     List<String> equiposClasificados = new ArrayList<>();

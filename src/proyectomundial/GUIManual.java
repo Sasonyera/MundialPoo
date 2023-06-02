@@ -28,6 +28,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
@@ -496,12 +497,12 @@ public class GUIManual extends JFrame {
     SeleccionDAO.EquipoConGoles cinco2 = seleccionDAO.getEquipoConMenosGoles();
     SeleccionDAO.EquipoConGoles seis1 = seleccionDAO.getEquipoConMasPuntos();
     SeleccionDAO.EquipoConGoles seis2 = seleccionDAO.getEquipoConMenosPuntos();
-    String siete1 = seleccionDAO.getContinenteConMasGoles();
-    String siete2 = seleccionDAO.getContinenteConMenosGoles();
-    
-    // Obtener los equipos clasificados por grupo
+    SeleccionDAO.EquipoConGoles siete1 = seleccionDAO.getContinenteConMasGoles();
+    SeleccionDAO.EquipoConGoles siete2 = seleccionDAO.getContinenteConMenosGoles();
     List<String> equiposClasificados = seleccionDAO.getEquiposClasificadosPorGrupo();
-        System.out.println(equiposClasificados.size());
+    // Obtener los equipos clasificados por grupo
+    
+
     JTextArea a = new JTextArea();
     a.setText("En esta seccion, teniendo en cuenta los datos que fueron cargados en la matriz de resultados\n" +
             "se deben mostrar los siguientes datos:\n" +
@@ -517,9 +518,7 @@ public class GUIManual extends JFrame {
             "8. Clasificados por cada grupo (Clasifican los dos primeros equipos de cada grupo):\n");
 
     // Agregar los equipos clasificados por grupo al texto
-    for (String equipo : equiposClasificados) {
-        a.append("- " + equipo + "\n");
-    }
+   
 //uno
     JPanel PuntoUno = new JPanel();
         PuntoUno.setLayout(new BoxLayout(PuntoUno, BoxLayout.Y_AXIS));
@@ -541,11 +540,21 @@ JPanel PuntoCinco = new JPanel();
 JPanel PuntoSeis = new JPanel();
         PuntoSeis.setLayout(new BoxLayout(PuntoSeis, BoxLayout.Y_AXIS));
         PuntoSeis.add(crearGraficaBarrasApiladas6(seis1, seis2));
- 
+ //siete
+JPanel PuntoSiete = new JPanel();
+        PuntoSiete.setLayout(new BoxLayout(PuntoSiete, BoxLayout.Y_AXIS));
+        PuntoSiete.add(crearGraficaBarrasApiladas7(siete1, siete2));
+  //ocho
+JPanel PuntoOcho = new JPanel();
+        PuntoOcho.setLayout(new BoxLayout(PuntoOcho, BoxLayout.Y_AXIS));
+        PuntoOcho.add(crearGraficaCircularEquiposClasificados(equiposClasificados));       
+        
         paneles.add(PuntoUno);
         paneles.add(PuntoCuatro);
         paneles.add(PuntoCinco);
         paneles.add(PuntoSeis);
+        paneles.add(PuntoSiete);
+        paneles.add(PuntoOcho);
     
         jPanelMain.setLayout(new BorderLayout());
         
@@ -698,6 +707,79 @@ System.out.println("Equipo con menos puntos: " + equipoConMenosPuntos.getNombreE
 
     return panel;
 }
+private ChartPanel crearGraficaBarrasApiladas7(EquipoConGoles continenteConMasGoles, EquipoConGoles continenteConMenosGoles) {
+     System.out.println("Equipo con más Goles: " + continenteConMasGoles.getNombreEquipo()+ " - " + continenteConMasGoles.getCantidadGoles()*3);
+System.out.println("Equipo con menos Goles: " + continenteConMenosGoles.getNombreEquipo()+ " - " + continenteConMenosGoles.getCantidadGoles()*3);
+
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    dataset.addValue(continenteConMasGoles.getCantidadGoles(), "Goles", continenteConMasGoles.getNombreEquipo());
+    dataset.addValue(continenteConMenosGoles.getCantidadGoles(), "Goles", continenteConMenosGoles.getNombreEquipo());
+
+    JFreeChart graficoBarras = ChartFactory.createBarChart(
+            "Continente con más y menos goles",
+            "Continente",
+            "Cantidad de goles",
+            dataset,
+            PlotOrientation.HORIZONTAL,
+            true,
+            true,
+            false
+    );
+
+    CategoryPlot plot = graficoBarras.getCategoryPlot();
+    BarRenderer renderer = (BarRenderer) plot.getRenderer();
+    renderer.setSeriesPaint(0, new Color(9, 72, 132));
+    renderer.setSeriesPaint(1, new Color(18, 119, 217));
+    
+    CategoryAxis domainAxis = plot.getDomainAxis();
+    domainAxis.setTickLabelsVisible(true);
+    
+    // Ajustar el espacio entre las barras
+    double margin = 0.2; // Espacio entre las barras (20% del ancho total)
+    domainAxis.setCategoryMargin(margin);
+    
+    // Ajustar el espacio en los extremos del eje
+    double start = margin / 2.0; // Espacio al principio del eje
+    double end = 1.0 - margin / 2.0; // Espacio al final del eje
+    domainAxis.setLowerMargin(start);
+    domainAxis.setUpperMargin(1.0 - end);
+    
+    ChartPanel panel = new ChartPanel(graficoBarras);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+private ChartPanel crearGraficaCircularEquiposClasificados(List<String> equiposClasificados) {
+    DefaultPieDataset dataset = new DefaultPieDataset();
+
+    // Agregar los equipos clasificados al dataset
+    for (int i = 0; i < equiposClasificados.size(); i++) {
+        String equipo = equiposClasificados.get(i);
+        dataset.setValue(equipo, 1);
+    }
+
+    JFreeChart graficoCircular = ChartFactory.createPieChart(
+            "Equipos clasificados por grupo",
+            dataset,
+            true,
+            true,
+            false
+    );
+
+    PiePlot plot = (PiePlot) graficoCircular.getPlot();
+    plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {1}"));
+
+    ChartPanel panel = new ChartPanel(graficoCircular);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+
+
+
+
 
 
 
