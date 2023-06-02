@@ -335,32 +335,42 @@ public int getNumeroPartidosConEmpatados() {
     return numeroPartidosConGanador;
 }
 
-public String getEquipoConMasGoles() {
-    String sql = "SELECT local, SUM(goles_local) as goles_local, visitante, SUM(goles_visitante) as goles_visitante FROM w_garcia2.resultado GROUP BY local, visitante";
-    String equipoConMasGoles = "";
+public class EquipoConGoles {
+    private String nombreEquipo;
+    private int cantidadGoles;
+
+    public EquipoConGoles(String nombreEquipo, int cantidadGoles) {
+        this.nombreEquipo = nombreEquipo;
+        this.cantidadGoles = cantidadGoles;
+    }
+
+    public String getNombreEquipo() {
+        return nombreEquipo;
+    }
+
+    public int getCantidadGoles() {
+        return cantidadGoles;
+    }
+}
+
+public EquipoConGoles getEquipoConMasGoles() {
+    String sql = "SELECT equipo, SUM(total_goles) as goles FROM (SELECT local as equipo, SUM(goles_local) as total_goles FROM w_garcia2.resultado GROUP BY local " +
+            "UNION ALL " +
+            "SELECT visitante as equipo, SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY visitante) as goles_totales " +
+            "GROUP BY equipo " +
+            "ORDER BY goles DESC " +
+            "LIMIT 1";
+
+    EquipoConGoles equipoConMasGoles = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
-        if (result != null) {
-            int maxGoles = 0;
-            
-            while (result.next()) {
-                int golesLocal = result.getInt("goles_local");
-                int golesVisitante = result.getInt("goles_visitante");
-                String equipoLocal = result.getString("local");
-                String equipoVisitante = result.getString("visitante");
+        if (result != null && result.next()) {
+            String equipo = result.getString("equipo");
+            int goles = result.getInt("goles");
 
-                if (golesLocal > maxGoles) {
-                    maxGoles = golesLocal;
-                    equipoConMasGoles = equipoLocal;
-                }
-
-                if (golesVisitante > maxGoles) {
-                    maxGoles = golesVisitante;
-                    equipoConMasGoles = equipoVisitante;
-                }
-            }
+            equipoConMasGoles = new EquipoConGoles(equipo, goles);
         }
     } catch (Exception e) {
         System.out.println(e.toString());
@@ -369,32 +379,25 @@ public String getEquipoConMasGoles() {
 
     return equipoConMasGoles;
 }
-public String getEquipoConMenosGoles() {
-    String sql = "SELECT local, SUM(goles_local) as goles_local, visitante, SUM(goles_visitante) as goles_visitante FROM w_garcia2.resultado GROUP BY local, visitante";
-    String equipoConMenosGoles = "";
+
+public EquipoConGoles getEquipoConMenosGoles() {
+    String sql = "SELECT equipo, SUM(total_goles) as goles FROM (SELECT local as equipo, SUM(goles_local) as total_goles FROM w_garcia2.resultado GROUP BY local " +
+            "UNION ALL " +
+            "SELECT visitante as equipo, SUM(goles_visitante) as total_goles FROM w_garcia2.resultado GROUP BY visitante) as goles_totales " +
+            "GROUP BY equipo " +
+            "ORDER BY goles ASC " +
+            "LIMIT 1";
+
+    EquipoConGoles equipoConMenosGoles = null;
 
     try {
         ResultSet result = BasedeDatos.ejecutarSQL(sql);
 
-        if (result != null) {
-            int minGoles = Integer.MAX_VALUE;
-            
-            while (result.next()) {
-                int golesLocal = result.getInt("goles_local");
-                int golesVisitante = result.getInt("goles_visitante");
-                String equipoLocal = result.getString("local");
-                String equipoVisitante = result.getString("visitante");
+        if (result != null && result.next()) {
+            String equipo = result.getString("equipo");
+            int goles = result.getInt("goles");
 
-                if (golesLocal < minGoles) {
-                    minGoles = golesLocal;
-                    equipoConMenosGoles = equipoLocal;
-                }
-
-                if (golesVisitante < minGoles) {
-                    minGoles = golesVisitante;
-                    equipoConMenosGoles = equipoVisitante;
-                }
-            }
+            equipoConMenosGoles = new EquipoConGoles(equipo, goles);
         }
     } catch (Exception e) {
         System.out.println(e.toString());
@@ -403,6 +406,7 @@ public String getEquipoConMenosGoles() {
 
     return equipoConMenosGoles;
 }
+
 public String getEquipoConMasPuntos() {
     String sql = "SELECT local, SUM(CASE WHEN goles_local > goles_visitante THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_local, visitante, SUM(CASE WHEN goles_visitante > goles_local THEN 3 WHEN goles_local = goles_visitante THEN 1 ELSE 0 END) as puntos_visitante FROM w_garcia2.resultado GROUP BY local, visitante";
     String equipoConMasPuntos = "";

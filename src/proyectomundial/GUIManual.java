@@ -24,7 +24,19 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.WindowConstants;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
 import proyectomundial.DAO.SeleccionDAO;
+import proyectomundial.DAO.SeleccionDAO.EquipoConGoles;
 import proyectomundial.model.Seleccion;
 
 public class GUIManual extends JFrame {
@@ -427,8 +439,9 @@ public class GUIManual extends JFrame {
     // Limpiar y agregar el JScrollPane al centro del panel principal
     jPanelMain.removeAll();
     jPanelMain.add(scrollPane, BorderLayout.CENTER);
-    jPanelMain.revalidate();
     jPanelMain.repaint();
+    jPanelMain.revalidate();
+    
 }
 
 
@@ -469,14 +482,18 @@ public class GUIManual extends JFrame {
      */
     private void accionDashboardRes() {
     jLabelTop.setText("Dash De Resultados");
+    JPanel paneles = new JPanel();
+     paneles.setLayout(new GridLayout(2, 2, 5, 5));
+      paneles.setPreferredSize((new java.awt.Dimension(620, 410)));
+       paneles.setMaximumSize( jPanelRight.getPreferredSize());
     int uno = seleccionDAO.getTotalResultadosCargadas();
     double dos = seleccionDAO.getPromedioGolesPorPartido();
     String tres1 = seleccionDAO.getPartidoConMasGoles();
     String tres2 = seleccionDAO.getPartidoConMenosGoles();
     int cuatro1 = seleccionDAO.getNumeroPartidosConGanador();
     int cuatro2 = seleccionDAO.getNumeroPartidosConEmpatados();
-    String cinco1 = seleccionDAO.getEquipoConMasGoles();
-    String cinco2 = seleccionDAO.getEquipoConMenosGoles();
+    SeleccionDAO.EquipoConGoles cinco1 = seleccionDAO.getEquipoConMasGoles();
+    SeleccionDAO.EquipoConGoles cinco2 = seleccionDAO.getEquipoConMenosGoles();
     String seis1 = seleccionDAO.getEquipoConMasPuntos();
     String seis2 = seleccionDAO.getEquipoConMenosPuntos();
     String siete1 = seleccionDAO.getContinenteConMasGoles();
@@ -503,19 +520,141 @@ public class GUIManual extends JFrame {
     for (String equipo : equiposClasificados) {
         a.append("- " + equipo + "\n");
     }
-
+//uno
+    JPanel PuntoUno = new JPanel();
+        PuntoUno.setLayout(new BoxLayout(PuntoUno, BoxLayout.Y_AXIS));
+        PuntoUno.add(crearGraficaCircularRES(uno, "Proporción de partidos cargados"));
+    //JScrollPane scrollPane = new JScrollPane(a);
+    //scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+//dos - Jhice
+//cuatro     
+ JPanel PuntoCuatro = new JPanel();
+        PuntoCuatro.setLayout(new BoxLayout(PuntoCuatro, BoxLayout.Y_AXIS));
+        PuntoCuatro.add(crearGraficaBarrasAgrupadasRES(cuatro1, cuatro2));
+        
+//cinco 
+JPanel PuntoCinco = new JPanel();
+        PuntoCinco.setLayout(new BoxLayout(PuntoCinco, BoxLayout.Y_AXIS));
+        PuntoCinco.add(crearGraficaBarrasApiladas(cinco1, cinco2));
+       
+        paneles.add(PuntoCinco);
+        paneles.add(PuntoUno);
+        paneles.add(PuntoCuatro);
+        paneles.add(PuntoCinco);
     
-    JScrollPane scrollPane = new JScrollPane(a);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     
         jPanelMain.setLayout(new BorderLayout());
         
     jPanelMain.removeAll();
-    jPanelMain.add(scrollPane,BorderLayout.CENTER);
+    //jPanelMain.add(scrollPane,BorderLayout.CENTER);
+    jPanelMain.add(paneles,BorderLayout.PAGE_START);
 
     jPanelMain.repaint();
     jPanelMain.revalidate();
 }
+private ChartPanel crearGraficaCircularRES(int totalCargadas, String nombreGrafico) {
+   int PARTIDOS=64;
+   int restantes=PARTIDOS - totalCargadas;
+    DefaultPieDataset dataset = new DefaultPieDataset();
+    dataset.setValue("Cargadas: "+totalCargadas+" selecciones", totalCargadas);
+    dataset.setValue("Restantes: "+restantes+" selecciones", PARTIDOS - totalCargadas);
+
+    JFreeChart graficoCircular = ChartFactory.createPieChart(
+            nombreGrafico,
+            dataset,
+            true,
+            true,
+            false
+    );
+
+    PiePlot plot = (PiePlot) graficoCircular.getPlot();
+    plot.setSimpleLabels(true);
+
+    ChartPanel panel = new ChartPanel(graficoCircular);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+
+private ChartPanel crearGraficaBarrasAgrupadasRES(int numeroPartidosConGanador, int numeroPartidosConEmpate) {
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    dataset.addValue(numeroPartidosConGanador, "Ganados", "");
+    dataset.addValue(numeroPartidosConEmpate, "Empatados", "");
+
+    JFreeChart graficoBarras = ChartFactory.createBarChart(
+            "Número de partidos: Ganados o Empatados",
+            "",
+            "Cantidad",
+            dataset,
+            PlotOrientation.VERTICAL,
+            true,
+            true,
+            false
+    );
+
+    CategoryPlot plot = graficoBarras.getCategoryPlot();
+    BarRenderer renderer = (BarRenderer) plot.getRenderer();
+    renderer.setSeriesPaint(0, new Color(9, 72, 132));
+    renderer.setSeriesPaint(1, new Color(18, 119, 217));
+
+    CategoryAxis axis = plot.getDomainAxis();
+    axis.setTickLabelsVisible(false);
+
+    ChartPanel panel = new ChartPanel(graficoBarras);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+
+private ChartPanel crearGraficaBarrasApiladas(EquipoConGoles equipoConMasGoles, EquipoConGoles equipoConMenosGoles) {
+   System.out.println("Equipo con más goles: " + equipoConMasGoles.getNombreEquipo()+ " - " + equipoConMasGoles.getCantidadGoles());
+System.out.println("Equipo con menos goles: " + equipoConMenosGoles.getNombreEquipo()+ " - " + equipoConMenosGoles.getCantidadGoles());
+
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    dataset.addValue(equipoConMasGoles.getCantidadGoles(), "Goles", equipoConMasGoles.getNombreEquipo());
+    dataset.addValue(equipoConMenosGoles.getCantidadGoles(), "Goles", equipoConMenosGoles.getNombreEquipo());
+
+    JFreeChart graficoBarras = ChartFactory.createBarChart(
+            "Selecciones con más y menos goles",
+            "Selección",
+            "Cantidad de goles",
+            dataset,
+            PlotOrientation.HORIZONTAL,
+            true,
+            true,
+            false
+    );
+
+    CategoryPlot plot = graficoBarras.getCategoryPlot();
+    BarRenderer renderer = (BarRenderer) plot.getRenderer();
+    renderer.setSeriesPaint(0, new Color(9, 72, 132));
+    renderer.setSeriesPaint(1, new Color(18, 119, 217));
+    
+    CategoryAxis domainAxis = plot.getDomainAxis();
+    domainAxis.setTickLabelsVisible(true);
+    
+    // Ajustar el espacio entre las barras
+    double margin = 0.2; // Espacio entre las barras (20% del ancho total)
+    domainAxis.setCategoryMargin(margin);
+    
+    // Ajustar el espacio en los extremos del eje
+    double start = margin / 2.0; // Espacio al principio del eje
+    double end = 1.0 - margin / 2.0; // Espacio al final del eje
+    domainAxis.setLowerMargin(start);
+    domainAxis.setUpperMargin(1.0 - end);
+    
+    ChartPanel panel = new ChartPanel(graficoBarras);
+    panel.setMouseWheelEnabled(true);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    return panel;
+}
+
+
+
+
 
 
     /**
